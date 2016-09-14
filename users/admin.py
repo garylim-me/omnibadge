@@ -1,10 +1,11 @@
 from django.contrib import admin
 
-from .models import User, Address, Privilege
+from .models import User, Privilege
+from common import models as common_models
 
 
 class AddressInline(admin.StackedInline):
-    model = Address
+    model = common_models.Address
     extra = 0
 
 
@@ -21,5 +22,4 @@ class UserAdmin(admin.ModelAdmin):
 
 
 admin.site.register(User, UserAdmin)
-admin.site.register(Address)
 admin.site.register(Privilege)

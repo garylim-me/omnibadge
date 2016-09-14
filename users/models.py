@@ -68,35 +68,3 @@ class User(AbstractUser):
 # overrides AbstractUser defaults
 User._meta.get_field('email').blank = False
 # User._meta.get_field('email')._unique = True
-
-
-class Address(models.Model):
-    address_type = models.CharField(max_length=30)  # Form, User, Company, DocPassport, DocNRIC
-
-    address_line_1 = models.CharField(max_length=120)
-    address_line_2 = models.CharField(max_length=120)
-    city = models.CharField(max_length=30)
-    state = models.CharField(max_length=30)
-    postal_code = models.CharField(max_length=15)
-
-    # a user can have multiple addresses, some old and inactive
-    is_active = models.BooleanField(default=False,)
-
-    # relationship: many addresses have 1 or 0 user (can also belong to a form)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    # references: 1 address to many forms
-    # forms = relationship("Form", backref="address")
-
-    # references: (1 or many) addresses to 1 user/company/country
-    # user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    # company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
-    # country_id = db.Column(db.Integer, db.ForeignKey('country.id'), nullable=False)
-
-    def __str__(self):
-        return "Address Type: " + self.address_type
-
-    def __repr__(self):
-        return "<{}: address_type='{}', address_line_1='{}'>".format(
-            self.__class__.__name__,
-            self.address_type, self.address_line_1)

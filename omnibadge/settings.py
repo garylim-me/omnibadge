@@ -42,12 +42,17 @@ DJANGO_APPS = (
     'django.contrib.admin',
 )
 THIRD_PARTY_APPS = (
-
+    'rest_framework',
 )
 
 # Apps specific for this project go here.
 LOCAL_APPS = (
     'users.apps.UsersConfig',
+    'transactions.apps.TransactionsConfig',
+    'documents.apps.DocumentsConfig',
+    'companies.apps.CompaniesConfig',
+    'common.apps.CommonConfig',
+    'services.apps.ServicesConfig',
 )
 
 # See: https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

@@ -20,5 +20,14 @@ from django.contrib import admin
 
 urlpatterns = [
     url(r'^users/', include('users.urls')),
+    url(r'^transactions/', include('transactions.urls')),
+    url(r'^documents/', include('documents.urls')),
+    url(r'^companies/', include('companies.urls')),
+    url(r'^services/', include('services.urls')),
     url(r'^admin/', admin.site.urls),
+
+    # to login at the api html page
+    # doc: http://www.django-rest-framework.org/tutorial/4-authentication-and-permissions/#adding-login-to-the-browsable-api
+    url(r'^api-auth/', include('rest_framework.urls',)),
+
 ]

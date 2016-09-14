@@ -1,0 +1,9 @@
+{% if latest_company_list %}
+    <ul>
+    {% for company in latest_company_list %}
+        <li><a href="{% url 'company:detail' company.id %}">{{ company.user }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No companies are available.</p>
+{% endif %}
