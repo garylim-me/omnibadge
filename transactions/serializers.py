@@ -9,7 +9,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transaction
-        fields = ('id', 'ui_type', 'transaction_token', 'js_result', 'date_created', 'user', 'service')
+        fields = ('id', 'ui_type', 'transaction_token', 'js_result', 'date_created', 'user', )  # temp removal TODO: 'service',
 
     # Not sure if needed:
     def create(self, validated_data):

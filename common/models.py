@@ -16,7 +16,7 @@ from documents import models as document_models
 
 class Address(models.Model):
     name = models.CharField(max_length=30, blank=True, )  # Optional field if the user wants to name the address
-    address_type = models.CharField(max_length=30)  # Form, User, Company, DocPassport, DocNRIC
+    # address_type = models.CharField(max_length=30)  # Form, User, Company, DocPassport, DocNRIC
 
     address_line_1 = models.CharField(max_length=120)
     address_line_2 = models.CharField(max_length=120, blank=True, )
@@ -45,12 +45,12 @@ class Address(models.Model):
     # country_id = db.Column(db.Integer, db.ForeignKey('country.id'), nullable=False)
 
     def __str__(self):
-        return "Address Type: " + self.address_type
+        return "Address name: " + self.name
 
     def __repr__(self):
-        return "<{}: address_type='{}', address_line_1='{}'>".format(
+        return "<{}: address_name='{}'>".format(
             self.__class__.__name__,
-            self.address_type, self.address_line_1)
+            self.name)
 
 
 # Not used yet

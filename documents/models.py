@@ -21,7 +21,7 @@ class Document(models.Model):
 
     # verification
     verified = models.BooleanField(default=False,)
-    date_verified = models.DateTimeField(blank=True, )
+    date_verified = models.DateTimeField(blank=True, null=True, )
 
     # references: many documents to 1 transaction
     transaction = models.ForeignKey(transaction_models.Transaction, on_delete=models.CASCADE)
@@ -29,7 +29,7 @@ class Document(models.Model):
     # references: many documents to 1 user
     user = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
 
-    # references: many documents to 1 document type
+    # references: many documents to 1 document type  # TODO: This don't make sense to be a selectable. KIV.
     document_type = models.ForeignKey(transaction_models.DocumentType, on_delete=models.CASCADE)
 
     class Meta:

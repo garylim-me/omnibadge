@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from users import models as user_models
 from companies import models as company_models
-from services import models as service_models
+# from services import models as service_models
 
 
 class DocumentType(models.Model):
@@ -51,7 +51,7 @@ class Transaction(models.Model):
     user = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
 
     # references: many transactions to 1 service
-    service = models.ForeignKey(service_models.Service, on_delete=models.CASCADE)
+    # service = models.ForeignKey(service_models.Service, on_delete=models.CASCADE)  # Temp TODO
 
     # references: many transactions to 1 company
     company = models.ForeignKey(company_models.Company, on_delete=models.CASCADE)
