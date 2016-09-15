@@ -74,4 +74,4 @@ class Transaction(models.Model):
     def __repr__(self):
         return "<{}: company_ip='{}', owner_id='{}', datetime_created='{}'>".format(
             self.__class__.__name__,
-            self.company_ip, self.owner_id, self.datetime_created)
+            self.company_ip, self.user, self.date_created)

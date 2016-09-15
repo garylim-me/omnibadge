@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import DocPassport, DocForm
+from .models import DocPassport, DocForm, UserDocument
 
 
 class DocPassportAdmin(admin.ModelAdmin):
@@ -18,3 +18,4 @@ class DocPassportAdmin(admin.ModelAdmin):
 
 admin.site.register(DocPassport, DocPassportAdmin)
 admin.site.register(DocForm)
+admin.site.register(UserDocument)

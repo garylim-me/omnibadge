@@ -55,7 +55,7 @@ class User(AbstractUser):
     def __repr__(self):
         return "<{} '{}': privilege='{}', registered='{}'>".format(
             self.__class__.__name__,
-            self.email, self.privilege.name, self.is_registered)
+            self.email, self.privilege, self.is_registered)
 
     # example
     def was_registered_recently(self):
