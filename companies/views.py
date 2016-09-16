@@ -89,13 +89,6 @@ class CompanyDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.D
         return self.destroy(request, *args, **kwargs)
 
 
-@api_view(['GET'])
-def api_root(request, format=None):
-    return Response({
-        'users': reverse('user-list', request=request, format=format),
-    })
-
-
 class CompanyHighlight(generics.GenericAPIView):
     queryset = Company.objects.all()
     renderer_classes = (renderers.StaticHTMLRenderer,)

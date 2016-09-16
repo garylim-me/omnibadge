@@ -90,13 +90,6 @@ class UserDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.Dest
         return self.destroy(request, *args, **kwargs)
 
 
-@api_view(['GET'])
-def api_root(request, format=None):
-    return Response({
-        'users': reverse('user-list', request=request, format=format),
-    })
-
-
 class UserHighlight(generics.GenericAPIView):
     queryset = User.objects.all()
     renderer_classes = (renderers.StaticHTMLRenderer,)

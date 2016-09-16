@@ -18,7 +18,7 @@ from transactions import models as transaction_models
 # Handles the creation of all document types
 class DocumentManager(models.Manager):
 
-    def create_doc(self, user, doc_type, **kwargs):
+    def create_doc(self, email, doc_type, transaction_id, **kwargs):
         if doc_type == "Form":
             doc_class = DocForm
             document_type = transaction_models.DocumentType.objects.get(name="Form")
@@ -28,7 +28,9 @@ class DocumentManager(models.Manager):
         else:
             raise ValueError("doc_type is not supported.")
 
-        doc_object = doc_class.objects.create(user=user, document_type=document_type, **kwargs)
+        transaction = transaction_models.Transaction.objects.get(id=transaction_id)
+        user = user_models.User.objects.get(email=email)
+        doc_object = doc_class.objects.create(user=user, transaction=transaction, document_type=document_type, **kwargs)
         user_doc = self.create(user=user, document_object=doc_object)
         return user_doc
 
@@ -73,6 +75,8 @@ class Document(models.Model):
 
     # references: many documents to 1 document type  # TODO: This don't make sense to be a selectable. KIV.
     document_type = models.ForeignKey(transaction_models.DocumentType, on_delete=models.CASCADE)
+
+    # TODO: enforce that every document is linked to 1 and only 1 UserDocument
 
     class Meta:
         abstract = True

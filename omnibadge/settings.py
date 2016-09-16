@@ -43,6 +43,7 @@ DJANGO_APPS = (
 )
 THIRD_PARTY_APPS = (
     'rest_framework',
+    'django_hosts',
 )
 
 # Apps specific for this project go here.
@@ -59,6 +60,7 @@ LOCAL_APPS = (
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE_CLASSES = [
+    'django_hosts.middleware.HostsRequestMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -67,9 +69,17 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_hosts.middleware.HostsResponseMiddleware',
 ]
 
 ROOT_URLCONF = 'omnibadge.urls'
+
+# https://django-hosts.readthedocs.io/en/latest/
+ROOT_HOSTCONF = 'omnibadge.hosts'
+DEFAULT_HOST = 'www'
+
+# http://thingsilearned.com/2009/01/05/using-subdomains-in-django/
+SESSION_COOKIE_DOMAIN = '.omnibadge.com'
 
 TEMPLATES = [
     {

@@ -2,16 +2,13 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
-from documents.serializers import DocumentSerializer
+from documents.serializers import DocumentSerializer, UserDocumentSerializer, CreateDocumentSerializer
 from documents.restpermissions import IsOwnerOrReadOnly
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import mixins
-from rest_framework import generics
-from rest_framework import permissions
-from rest_framework import renderers
+from rest_framework import mixins, generics, permissions, renderers
 from rest_framework.reverse import reverse
 
 from django.http import HttpResponse, Http404
@@ -19,65 +16,76 @@ from django.template import loader
 from django.shortcuts import render, get_object_or_404
 from django.views import generic
 
-from .models import DocPassport
-
-
-# Traditional way:
-#
-# def index(request):
-#     latest_user_list = User.objects.order_by('-date_registered')[:5]
-#     context = {
-#         'latest_user_list': latest_user_list,
-#     }
-#     return render(request, 'users/index.html', context)
-#
-#
-# def detail(request, user_id):
-#     user = get_object_or_404(User, pk=user_id)
-#     return render(request, 'users/detail.html', {'user': user})
+from .models import DocPassport, UserDocument
 
 
 # Generic views way:
-
 class IndexView(generic.ListView):
     template_name = 'documents/index.html'
     context_object_name = 'latest_document_list'
 
     def get_queryset(self):
         """Return the last five published questions."""
-        return DocPassport.objects.order_by('-date_created')[:5]
+        return UserDocument.objects.order_by('-date_created')[:5]
 
 
 class DetailView(generic.DetailView):
-    model = DocPassport
+    model = UserDocument
     template_name = 'documents/detail.html'
 
 
 # ====== APIS ======
 # Doc: http://www.django-rest-framework.org/tutorial/3-class-based-views/#using-generic-class-based-views
 
-class DocumentList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
-    """
-    List all users, or create a new user.
-    """
-    queryset = DocPassport.objects.all()
-    serializer_class = DocumentSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+class DocumentList(APIView):
+    """
+    List all snippets, or create a new snippet.
+    """
+    def get(self, request, format=None):
+        snippets = UserDocument.objects.all()
+        serializer = UserDocumentSerializer(snippets, many=True)
+        return Response(serializer.data)
 
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+    def post(self, request, format=None):
+        print 'creating serial'
+        serializer = CreateDocumentSerializer(data=request.data)
+        print 'finished creating serial'
+        if serializer.is_valid():
+            print 'saving'
+            serializer.save()
+            print 'saved'
+            # Note: Can't return serializer.data because listed data don't actually belong to object
+            # TODO: better fix needed
+            return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
+            # return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class DocumentList2(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+#     """
+#     List all users, or create a new document.
+#     """
+#     queryset = UserDocument.objects.all()
+#     serializer_class = UserDocumentSerializer
+#
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+#
+#     def get(self, request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
+#
+#     def post(self, request, *args, **kwargs):
+#         return self.create(request, *args, **kwargs)
 
 
 class DocumentDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
-                        generics.GenericAPIView):
+                     generics.GenericAPIView):
     """
-    Retrieve, update or delete a user instance.
+    Retrieve, update or delete a document instance.
     """
-    queryset = DocPassport.objects.all()
-    serializer_class = DocumentSerializer
+    queryset = UserDocument.objects.all()
+    serializer_class = UserDocumentSerializer
+
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
 
     def get(self, request, *args, **kwargs):
@@ -88,13 +96,6 @@ class DocumentDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
 
     def delete(self, request, *args, **kwargs):
         return self.destroy(request, *args, **kwargs)
-
-
-@api_view(['GET'])
-def api_root(request, format=None):
-    return Response({
-        'transactions': reverse('transaction-list', request=request, format=format),
-    })
 
 
 class DocumentHighlight(generics.GenericAPIView):

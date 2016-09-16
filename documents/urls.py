@@ -20,7 +20,6 @@ urlpatterns = [
     url(r'^api/$', views.DocumentList.as_view()),
     url(r'^api/(?P<pk>[0-9]+)/$', views.DocumentDetail.as_view()),
 
-    url(r'^api/root$', views.api_root),
     url(r'^api/(?P<pk>[0-9]+)/highlight/$', views.DocumentHighlight.as_view()),
 ]
 

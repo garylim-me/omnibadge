@@ -90,13 +90,6 @@ class TransactionDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixi
         return self.destroy(request, *args, **kwargs)
 
 
-@api_view(['GET'])
-def api_root(request, format=None):
-    return Response({
-        'transactions': reverse('transaction-list', request=request, format=format),
-    })
-
-
 class TransactionHighlight(generics.GenericAPIView):
     queryset = Transaction.objects.all()
     renderer_classes = (renderers.StaticHTMLRenderer,)
