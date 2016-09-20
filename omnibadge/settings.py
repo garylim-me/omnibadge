@@ -43,6 +43,7 @@ DJANGO_APPS = (
 )
 THIRD_PARTY_APPS = (
     'rest_framework',
+    'rest_framework.authtoken',
     'django_hosts',
 )
 
@@ -141,6 +142,15 @@ AUTH_USER_MODEL = 'users.User'
 LOGIN_REDIRECT_URL = 'users:redirect'
 LOGIN_URL = 'account_login'
 
+# http://www.django-rest-framework.org/api-guide/authentication/
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    )
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/

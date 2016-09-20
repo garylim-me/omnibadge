@@ -97,3 +97,6 @@ class UserHighlight(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         user = self.get_object()
         return Response(user.highlighted)
+
+
+

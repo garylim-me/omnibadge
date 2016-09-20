@@ -9,7 +9,7 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DocPassport
-        fields = ('date_created', 'version', 'verified', 'date_verified', 'transaction', 'user', 'document_type')
+        fields = ('date_created', 'version', 'verified', 'date_verified', 'transaction', 'owner', 'document_type')
 
     # def update(self, instance, validated_data):
     #     """
@@ -55,6 +55,10 @@ class UserDocumentSerializer(serializers.ModelSerializer):
 
 class CreateDocumentSerializer(serializers.Serializer):
 
+    # TODO: need to record document creator too
+    # http://www.django-rest-framework.org/api-guide/fields/#serializermethodfield
+    # creator_id = serializers.SerializerMethodField(source='creator.id')
+    # creator_id = serializers.ReadOnlyField(source='creator.id')
     email = serializers.CharField(max_length=120)
     doc_type = serializers.CharField(max_length=10)
     version = serializers.CharField(max_length=10)
@@ -62,10 +66,18 @@ class CreateDocumentSerializer(serializers.Serializer):
     document_filename = serializers.CharField(required=False, allow_blank=True, max_length=100)
     document_image = serializers.CharField(required=False, allow_blank=True, max_length=100)
 
+    # class Meta:
+    #     # TODO:
+    #     # model = Document
+    #     fields = ("email", "doc_type", "version", "transaction_id", "document_filename", "document_image")
+
     def create(self, validated_data):
         """
         Create and return a new `Snippet` instance, given the validated data.
         """
+        # TODO: Better fix needed. This is a hack to add creator_id into the validated_data to create doc
+        # self.validated_data['creator_id'] = self.creator.id
+
         # print 'ACTUAL CREATE TRIGGERED!!'
         user_doc = UserDocument.objects.create_doc(**validated_data)
 

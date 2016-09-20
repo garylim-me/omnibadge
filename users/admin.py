@@ -3,6 +3,10 @@ from django.contrib import admin
 from .models import User, Privilege
 from common import models as common_models
 
+from rest_framework.authtoken.admin import TokenAdmin
+
+TokenAdmin.raw_id_fields = ('user',)
+
 
 class AddressInline(admin.StackedInline):
     model = common_models.Address
@@ -11,7 +15,7 @@ class AddressInline(admin.StackedInline):
 
 class UserAdmin(admin.ModelAdmin):
     fieldsets = [
-        (None, {'fields': ['email', 'username', 'is_registered', 'date_registered', 'privilege']}),
+        (None, {'fields': ['email', 'username', 'is_registered', 'date_registered', 'privilege', ]}),
         ('Personal information', {'fields': ['first_name', 'last_name', 'phone', ]}),
         ('Account information', {'fields': ['password', 'last_login', 'date_joined', 'is_active', 'is_staff', ]}),
     ]

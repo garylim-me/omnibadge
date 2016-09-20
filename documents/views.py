@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from documents.serializers import DocumentSerializer, UserDocumentSerializer, CreateDocumentSerializer
-from documents.restpermissions import IsOwnerOrReadOnly
+from documents.restpermissions import IsOwnerOrReadOnly, IsOwnerOrNoAccess
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
@@ -42,6 +42,7 @@ class DocumentList(APIView):
     """
     List all snippets, or create a new snippet.
     """
+
     def get(self, request, format=None):
         snippets = UserDocument.objects.all()
         serializer = UserDocumentSerializer(snippets, many=True)
@@ -49,6 +50,10 @@ class DocumentList(APIView):
 
     def post(self, request, format=None):
         print 'creating serial'
+
+        # Adding request user into data as creator
+        # request.data['creator'] = 'self.request.user'
+
         serializer = CreateDocumentSerializer(data=request.data)
         print 'finished creating serial'
         if serializer.is_valid():
@@ -86,7 +91,7 @@ class DocumentDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
     queryset = UserDocument.objects.all()
     serializer_class = UserDocumentSerializer
 
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsOwnerOrNoAccess)
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)

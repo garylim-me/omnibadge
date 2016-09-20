@@ -18,6 +18,8 @@ from transactions import models as transaction_models
 # Handles the creation of all document types
 class DocumentManager(models.Manager):
 
+    # TODO: Can pass in owner and create objects instead?
+    # TODO: add creator_id
     def create_doc(self, email, doc_type, transaction_id, **kwargs):
         if doc_type == "Form":
             doc_class = DocForm
@@ -29,9 +31,14 @@ class DocumentManager(models.Manager):
             raise ValueError("doc_type is not supported.")
 
         transaction = transaction_models.Transaction.objects.get(id=transaction_id)
-        user = user_models.User.objects.get(email=email)
-        doc_object = doc_class.objects.create(user=user, transaction=transaction, document_type=document_type, **kwargs)
-        user_doc = self.create(user=user, document_object=doc_object)
+
+        owner = user_models.User.objects.get(email=email)
+        doc_object = doc_class.objects.create(owner=owner, transaction=transaction, document_type=document_type, **kwargs)
+
+        # TODO: Write creator and doc object ID and type into creator_doc table
+        # creator = user_models.User.objects.get(id=creator_id)
+
+        user_doc = self.create(user=owner, document_object=doc_object)
         return user_doc
 
 
@@ -54,8 +61,8 @@ class UserDocument(models.Model):
         return str(self.id)
 
     def __repr__(self):
-        return "<{}: id='{}', doc_type='{}', doc_id='{}', user='{}'>".format(
-            self.__class__.__name__, self.id, self.document_type, self.document_id, self.user)
+        return "<{}: id='{}', doc_type='{}', doc_id='{}', owner='{}'>".format(
+            self.__class__.__name__, self.id, self.document_type, self.document_id, self.owner)
 
 
 # This is an abstract model! Contains generic information needed for all documents.
@@ -70,8 +77,14 @@ class Document(models.Model):
     # references: many documents to 1 transaction
     transaction = models.ForeignKey(transaction_models.Transaction, on_delete=models.CASCADE)
 
-    # references: many documents to 1 user
-    user = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
+    # references: many documents to 1 owner (create/retrieve/update/delete rights)
+    # Both UserDocument and the owner fields contain the same user mapping information?! TODO: Decide
+    # Still makes sense to have owner here
+    owner = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
+
+    # references: many documents to 1 creator (only create and retrieve rights, no update/delete rights)
+    # creators will be stored in a separate table
+    # creator = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
 
     # references: many documents to 1 document type  # TODO: This don't make sense to be a selectable. KIV.
     document_type = models.ForeignKey(transaction_models.DocumentType, on_delete=models.CASCADE)
@@ -87,7 +100,7 @@ class Document(models.Model):
     def __repr__(self):
         return "<{}: company_ip='{}', owner_id='{}', datetime_created='{}'>".format(
             self.__class__.__name__,
-            self.document_type, self.user, self.transaction)
+            self.document_type, self.owner, self.transaction)
 
 
 class DocPassport(Document):
