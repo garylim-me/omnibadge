@@ -5,8 +5,6 @@ import datetime
 from django.contrib.auth.models import AbstractUser
 from django.core.urlresolvers import reverse
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
-from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -20,7 +18,7 @@ class DocumentManager(models.Manager):
 
     # TODO: Can pass in owner and create objects instead?
     # TODO: add creator_id
-    def create_doc(self, email, doc_type, transaction_id, **kwargs):
+    def create(self, email, doc_type, transaction_id, **kwargs):
         if doc_type == "Form":
             doc_class = DocForm
             document_type = transaction_models.DocumentType.objects.get(name="Form")
@@ -38,7 +36,9 @@ class DocumentManager(models.Manager):
         # TODO: Write creator and doc object ID and type into creator_doc table
         # creator = user_models.User.objects.get(id=creator_id)
 
-        user_doc = self.create(user=owner, document_object=doc_object)
+        user_doc = UserDocument(user=owner, document_object=doc_object)
+        user_doc.save()
+
         return user_doc
 
 
@@ -62,7 +62,7 @@ class UserDocument(models.Model):
 
     def __repr__(self):
         return "<{}: id='{}', doc_type='{}', doc_id='{}', owner='{}'>".format(
-            self.__class__.__name__, self.id, self.document_type, self.document_id, self.owner)
+            self.__class__.__name__, self.id, self.document_type, self.document_id, self.user)
 
 
 # This is an abstract model! Contains generic information needed for all documents.
@@ -93,6 +93,9 @@ class Document(models.Model):
 
     class Meta:
         abstract = True
+
+    def get_content_type(self):
+        return ContentType.objects.get_for_model(self).id
 
     def __str__(self):
         return str(self.id)

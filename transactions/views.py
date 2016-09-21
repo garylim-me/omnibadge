@@ -1,9 +1,10 @@
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.renderers import JSONRenderer
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.parsers import JSONParser
-from transactions.serializers import TransactionSerializer
-from transactions.restpermissions import IsOwnerOrReadOnly
+from transactions.serializers import TransactionSerializer, TransactionCreateSerializer
+from transactions.restpermissions import HasReadPrivilegesOrNoAccess
+from api.tokenauth import SessionTokenAuthentication
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
@@ -22,23 +23,6 @@ from django.views import generic
 from .models import Transaction
 
 
-# Traditional way:
-#
-# def index(request):
-#     latest_user_list = User.objects.order_by('-date_registered')[:5]
-#     context = {
-#         'latest_user_list': latest_user_list,
-#     }
-#     return render(request, 'users/index.html', context)
-#
-#
-# def detail(request, user_id):
-#     user = get_object_or_404(User, pk=user_id)
-#     return render(request, 'users/detail.html', {'user': user})
-
-
-# Generic views way:
-
 class IndexView(generic.ListView):
     template_name = 'transactions/index.html'
     context_object_name = 'latest_transaction_list'
@@ -56,19 +40,54 @@ class DetailView(generic.DetailView):
 # ====== APIS ======
 # Doc: http://www.django-rest-framework.org/tutorial/3-class-based-views/#using-generic-class-based-views
 
-class TransactionList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
-    """
-    List all users, or create a new user.
-    """
-    queryset = Transaction.objects.all()
-    serializer_class = TransactionSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+class TransactionList(APIView):
+    """
+    List all snippets, or create a new snippet.
+    """
+    authentication_classes = (SessionTokenAuthentication,)
 
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+    # TODO: not sure why this is not working
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, HasReadPrivilegesOrNoAccess,)
+
+    def get(self, request, format=None):
+        transactions = Transaction.objects.all()
+        serializer = TransactionSerializer(transactions, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        print 'creating serial'
+
+        # Adding request user into data as creator
+        # request.data['creator'] = 'self.request.user'
+
+        serializer = TransactionCreateSerializer(data=request.data)
+        print 'finished creating serial'
+        if serializer.is_valid():
+            print 'saving'
+            serializer.save(user=request.user)
+            print 'saved'
+            # Note: Can't return serializer.data because listed data don't actually belong to object
+            # TODO: better fix needed
+            return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
+            # return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class TransactionList(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+#     """
+#     List all users, or create a new user.
+#     """
+#     queryset = Transaction.objects.all()
+#     serializer_class = TransactionSerializer
+#     # todo: temp disable. Need to change authenticated to check session token instead
+#     # permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+#
+#     def get(self, request, *args, **kwargs):
+#         return self.list(request, *args, **kwargs)
+#
+#     def post(self, request, *args, **kwargs):
+#         return self.create(request, *args, **kwargs)
 
 
 class TransactionDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
@@ -78,7 +97,10 @@ class TransactionDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixi
     """
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly)
+    authentication_classes = (SessionTokenAuthentication,)
+    # todo: temp disable. Need to change authenticated to check session token instead
+    # permission_classes = (HasReadPrivilegesOrNoAccess, )
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, HasReadPrivilegesOrNoAccess,)
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)

@@ -42,7 +42,7 @@ class UserDocumentSerializer(serializers.ModelSerializer):
         Create and return a new `Transaction` instance, given the validated data.
         """
         print "CREATE RUN!"
-        return UserDocument.objects.create_doc(**validated_data)
+        return UserDocument.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         """
@@ -79,7 +79,7 @@ class CreateDocumentSerializer(serializers.Serializer):
         # self.validated_data['creator_id'] = self.creator.id
 
         # print 'ACTUAL CREATE TRIGGERED!!'
-        user_doc = UserDocument.objects.create_doc(**validated_data)
+        user_doc = UserDocument.objects.create(**validated_data)
 
         # TODO: Better fix needed. This is a hack to add document_id into the returned results
         self.validated_data['document_id'] = user_doc.id

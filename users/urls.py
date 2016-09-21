@@ -1,6 +1,7 @@
 from django.conf.urls import url
 from rest_framework.urlpatterns import format_suffix_patterns
-from rest_framework.authtoken import views as auth_views
+
+from api.tokenauth import ObtainSessionToken
 from . import views
 
 app_name = 'users'
@@ -22,7 +23,7 @@ urlpatterns = [
 
     url(r'^api/(?P<pk>[0-9]+)/highlight/$', views.UserHighlight.as_view()),
 
-    url(r'^api-token-auth/', auth_views.obtain_auth_token),
+    url(r'^api-token-auth/', ObtainSessionToken.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

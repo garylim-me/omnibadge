@@ -57,6 +57,10 @@ class Company(models.Model):
     # transactions (done)
     # addresses (done)
 
+    class Meta:
+        verbose_name = _("Company")
+        verbose_name_plural = _("Companies")
+
     def __str__(self):
         return self.name
 

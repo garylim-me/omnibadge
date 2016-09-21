@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Transaction, DocumentType
+from .models import Transaction, DocumentType, TransactionToken
 
 
 # class DocumentTypeInline(admin.StackedInline):
@@ -25,3 +25,4 @@ class TransactionAdmin(admin.ModelAdmin):
 
 admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(DocumentType)
+admin.site.register(TransactionToken)

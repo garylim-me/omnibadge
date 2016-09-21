@@ -1,19 +1,10 @@
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.renderers import JSONRenderer
-from rest_framework.parsers import JSONParser
 from documents.serializers import DocumentSerializer, UserDocumentSerializer, CreateDocumentSerializer
-from documents.restpermissions import IsOwnerOrReadOnly, IsOwnerOrNoAccess
+from documents.restpermissions import HasTransTokenOrReadOnly, HasReadPriviledgesOrNoReadAccess, IsOwnerOrReadOnly
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import mixins, generics, permissions, renderers
-from rest_framework.reverse import reverse
-
-from django.http import HttpResponse, Http404
-from django.template import loader
-from django.shortcuts import render, get_object_or_404
 from django.views import generic
 
 from .models import DocPassport, UserDocument
@@ -26,7 +17,7 @@ class IndexView(generic.ListView):
 
     def get_queryset(self):
         """Return the last five published questions."""
-        return UserDocument.objects.order_by('-date_created')[:5]
+        return UserDocument.objects.order_by('-id')[:5]
 
 
 class DetailView(generic.DetailView):
@@ -37,11 +28,12 @@ class DetailView(generic.DetailView):
 # ====== APIS ======
 # Doc: http://www.django-rest-framework.org/tutorial/3-class-based-views/#using-generic-class-based-views
 
-
 class DocumentList(APIView):
     """
     List all snippets, or create a new snippet.
     """
+
+    permission_classes = (HasReadPriviledgesOrNoReadAccess, HasTransTokenOrReadOnly)
 
     def get(self, request, format=None):
         snippets = UserDocument.objects.all()
@@ -67,22 +59,6 @@ class DocumentList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class DocumentList2(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
-#     """
-#     List all users, or create a new document.
-#     """
-#     queryset = UserDocument.objects.all()
-#     serializer_class = UserDocumentSerializer
-#
-#     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-#
-#     def get(self, request, *args, **kwargs):
-#         return self.list(request, *args, **kwargs)
-#
-#     def post(self, request, *args, **kwargs):
-#         return self.create(request, *args, **kwargs)
-
-
 class DocumentDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin,
                      generics.GenericAPIView):
     """
@@ -91,7 +67,7 @@ class DocumentDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.
     queryset = UserDocument.objects.all()
     serializer_class = UserDocumentSerializer
 
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly, IsOwnerOrNoAccess)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, HasReadPriviledgesOrNoReadAccess, IsOwnerOrReadOnly)
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)

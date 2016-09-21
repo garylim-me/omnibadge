@@ -80,7 +80,10 @@ ROOT_HOSTCONF = 'omnibadge.hosts'
 DEFAULT_HOST = 'www'
 
 # http://thingsilearned.com/2009/01/05/using-subdomains-in-django/
-SESSION_COOKIE_DOMAIN = '.omnibadge.com'
+
+# Only set this when using https!
+# SESSION_COOKIE_DOMAIN = '.omnibadge.com'
+# SESSION_COOKIE_SECURE = ''
 
 TEMPLATES = [
     {
@@ -117,7 +120,6 @@ DATABASES = {
 }
 
 
-
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
 
@@ -144,11 +146,11 @@ LOGIN_URL = 'account_login'
 
 # http://www.django-rest-framework.org/api-guide/authentication/
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
+        # 'users.token_authentication.SessionTokenAuthentication',
     )
 }
 

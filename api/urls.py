@@ -1,13 +1,12 @@
 from django.conf.urls import url, include
 from rest_framework.urlpatterns import format_suffix_patterns
-from rest_framework.authtoken import views as auth_views
-from . import views
 
+from api.tokenauth import ObtainSessionToken
 from companies import views as company_views
 from documents import views as document_views
 from transactions import views as transaction_views
 from users import views as user_views
-
+from . import views
 
 app_name = 'api'
 urlpatterns = [
@@ -25,12 +24,11 @@ urlpatterns = [
     url(r'^users/$', user_views.UserList.as_view(), name='user-list'),
     url(r'^users/(?P<pk>[0-9]+)/$', user_views.UserDetail.as_view(), name='user-detail'),
 
-    url(r'^api-token-auth/', auth_views.obtain_auth_token),
+    # TODO: change session token view to create new tokens (more than 1 per user allowed)
+    url(r'^api-token-auth/', ObtainSessionToken.as_view()),
 
     url(r'^root/$', views.api_root),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-
-
 
 ]
 
