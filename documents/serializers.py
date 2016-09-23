@@ -3,13 +3,17 @@
 
 from rest_framework import serializers
 from .models import DocPassport, UserDocument
+from transactions.models import Transaction
 
 
 class DocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
+        print "got here!"
+        # TODO: need to make this generic!!
         model = DocPassport
-        fields = ('date_created', 'version', 'verified', 'date_verified', 'transaction', 'owner', 'document_type')
+
+        fields = ('id', 'document_image')
 
     # def update(self, instance, validated_data):
     #     """
@@ -25,7 +29,7 @@ class UserDocumentSerializer(serializers.ModelSerializer):
 
     # This is a roundabout way -- it's not extracting the document type from the base table
     # http://stackoverflow.com/questions/31289122/how-to-pull-nested-fields-out-when-serializing-django-rest-framework
-    document_type = serializers.CharField(source='document_object.document_type.name')
+    # document_type = serializers.CharField(source='document_object.document_type.name')
 
     # Extracting document fields
     # TODO: improvements needed here to dynamically include all fields of document subtypes
@@ -35,7 +39,12 @@ class UserDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserDocument
         # Note that "document_id" is the hidden id of the other table. Hence not displayed to public.
-        fields = ('id', 'user', 'document_type', 'document_object')
+        fields = ('id', 'user', 'date_created', 'version', 'verified', 'date_verified', 'document_type', 'transactions',
+                  'document_object', )
+
+    # other types:
+    # document_id
+    # document_object
 
     def create(self, validated_data):
         """
@@ -75,11 +84,8 @@ class CreateDocumentSerializer(serializers.Serializer):
         """
         Create and return a new `Snippet` instance, given the validated data.
         """
-        # TODO: Better fix needed. This is a hack to add creator_id into the validated_data to create doc
-        # self.validated_data['creator_id'] = self.creator.id
-
-        # print 'ACTUAL CREATE TRIGGERED!!'
-        user_doc = UserDocument.objects.create(**validated_data)
+        # TODO: Somehow document creation logic is here..
+        user_doc = Transaction.objects.create_document(**validated_data)
 
         # TODO: Better fix needed. This is a hack to add document_id into the returned results
         self.validated_data['document_id'] = user_doc.id

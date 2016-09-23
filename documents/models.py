@@ -10,7 +10,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
 from users import models as user_models
-from transactions import models as transaction_models
+# from transactions.models import Transaction
 
 
 # Handles the creation of all document types
@@ -18,26 +18,29 @@ class DocumentManager(models.Manager):
 
     # TODO: Can pass in owner and create objects instead?
     # TODO: add creator_id
-    def create(self, email, doc_type, transaction_id, **kwargs):
+    def create(self, email, doc_type, transaction_id, version, **kwargs):
         if doc_type == "Form":
             doc_class = DocForm
-            document_type = transaction_models.DocumentType.objects.get(name="Form")
+            # document_type = transaction_models.DocumentType.objects.get(name="Form")
         elif doc_type == "Passport":
             doc_class = DocPassport
-            document_type = transaction_models.DocumentType.objects.get(name="Passport")
+            # document_type = transaction_models.DocumentType.objects.get(name="Passport")
         else:
             raise ValueError("doc_type is not supported.")
 
-        transaction = transaction_models.Transaction.objects.get(id=transaction_id)
-
         owner = user_models.User.objects.get(email=email)
-        doc_object = doc_class.objects.create(owner=owner, transaction=transaction, document_type=document_type, **kwargs)
+
+        # simplified.
+        doc_object = doc_class.objects.create(**kwargs)
 
         # TODO: Write creator and doc object ID and type into creator_doc table
         # creator = user_models.User.objects.get(id=creator_id)
 
-        user_doc = UserDocument(user=owner, document_object=doc_object)
+        user_doc = UserDocument(user=owner, document_object=doc_object, version=version)
         user_doc.save()
+
+        # transaction = Transaction.objects.get(id=transaction_id)
+        # transaction.documents.add(user_doc)
 
         return user_doc
 
@@ -50,10 +53,22 @@ class UserDocument(models.Model):
     # references: many documents to 1 user
     user = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
 
+    date_created = models.DateTimeField(default=timezone.now)
+    version = models.CharField(max_length=10, )
+
+    # verification
+    verified = models.BooleanField(default=False, )
+    date_verified = models.DateTimeField(blank=True, null=True, )
+
+    # not sure if needed. removing for now. TODO: Check
+    # document_type = models.ForeignKey(transaction_models.DocumentType, on_delete=models.CASCADE)
+
     # https://docs.djangoproject.com/en/dev/ref/contrib/contenttypes/#generic-relations
     document_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)  # blanks are temp
     document_id = models.PositiveIntegerField()  # blanks are temp
     document_object = GenericForeignKey('document_type', 'document_id')
+
+
 
     objects = DocumentManager()
 
@@ -61,52 +76,55 @@ class UserDocument(models.Model):
         return str(self.id)
 
     def __repr__(self):
-        return "<{}: id='{}', doc_type='{}', doc_id='{}', owner='{}'>".format(
-            self.__class__.__name__, self.id, self.document_type, self.document_id, self.user)
+        return "<{}: id='{}', doc_type='{}', doc_id='{}', owner='{}', transactions='{}'>".format(
+            self.__class__.__name__, self.id, self.document_type, self.document_id, self.user,
+            self.transactions.values_list('id', flat=True))
+
+#
+# # This is an abstract model! Contains generic information needed for all documents.
+# class Document(models.Model):
+#     # date_created = models.DateTimeField(default=timezone.now)
+#     # version = models.CharField(max_length=10, )
+#
+#     # verification
+#     # verified = models.BooleanField(default=False,)
+#     # date_verified = models.DateTimeField(blank=True, null=True, )
+#
+#     # references: many documents to *many* transactions. Can *potentially* have 0 transactions/doc *in the future*.
+#     # (many transactions because the same document can be shared with another company for a different transaction)
+#     # transactions = models.ManyToManyField(transaction_models.Transaction, blank=True, related_name='documents')
+#
+#     # references: many documents to 1 owner (create/retrieve/update/delete rights)
+#     # Both UserDocument and the owner fields contain the same user mapping information?! TODO: Decide
+#     # Still makes sense to have owner here
+#     # owner = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
+#
+#     # references: many documents to 1 creator (only create and retrieve rights, no update/delete rights)
+#     # creators will be stored in a separate table
+#     # creator = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
+#
+#     # references: many documents to 1 document type  # TODO: This don't make sense to be a selectable. KIV.
+#     # document_type = models.ForeignKey(transaction_models.DocumentType, on_delete=models.CASCADE)
+#
+#     # TODO: enforce that every document is linked to 1 and only 1 UserDocument
+#
+#     class Meta:
+#         abstract = True
+#
+#     def get_content_type(self):
+#         return ContentType.objects.get_for_model(self).id
+#
+#     def __str__(self):
+#         return str(self.id)
+#
+#     def __repr__(self):
+#         return "<{}: document_type='{}', owner_id='{}', transaction ids='{}'>".format(
+#             self.__class__.__name__,
+#             self.document_type, self.owner, self.transactions.values_list('id', flat=True)
+# )
 
 
-# This is an abstract model! Contains generic information needed for all documents.
-class Document(models.Model):
-    date_created = models.DateTimeField(default=timezone.now)
-    version = models.CharField(max_length=10, )
-
-    # verification
-    verified = models.BooleanField(default=False,)
-    date_verified = models.DateTimeField(blank=True, null=True, )
-
-    # references: many documents to 1 transaction
-    transaction = models.ForeignKey(transaction_models.Transaction, on_delete=models.CASCADE)
-
-    # references: many documents to 1 owner (create/retrieve/update/delete rights)
-    # Both UserDocument and the owner fields contain the same user mapping information?! TODO: Decide
-    # Still makes sense to have owner here
-    owner = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
-
-    # references: many documents to 1 creator (only create and retrieve rights, no update/delete rights)
-    # creators will be stored in a separate table
-    # creator = models.ForeignKey(user_models.User, on_delete=models.CASCADE)
-
-    # references: many documents to 1 document type  # TODO: This don't make sense to be a selectable. KIV.
-    document_type = models.ForeignKey(transaction_models.DocumentType, on_delete=models.CASCADE)
-
-    # TODO: enforce that every document is linked to 1 and only 1 UserDocument
-
-    class Meta:
-        abstract = True
-
-    def get_content_type(self):
-        return ContentType.objects.get_for_model(self).id
-
-    def __str__(self):
-        return str(self.id)
-
-    def __repr__(self):
-        return "<{}: company_ip='{}', owner_id='{}', datetime_created='{}'>".format(
-            self.__class__.__name__,
-            self.document_type, self.owner, self.transaction)
-
-
-class DocPassport(Document):
+class DocPassport(models.Model):
 
     # user input/verify data
     document_image = models.CharField(max_length=30, )
@@ -123,7 +141,7 @@ class DocPassport(Document):
     parsed_expiry_date = models.DateTimeField(blank=True, null=True)
 
 
-class DocForm(Document):
+class DocForm(models.Model):
 
     # provided data
     first_name = models.CharField(max_length=100, blank=True, )

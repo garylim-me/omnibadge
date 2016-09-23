@@ -23,7 +23,7 @@ class SessionTokenAuthentication(authentication.BaseAuthentication):
         Authorization: Token 401f7ac837da42b97f613d789819ff93537bee6a
     """
 
-    keyword = 'Token'
+    keyword = 'session_token'
     model = user_models.SessionToken
 
     def get_model(self):
@@ -41,7 +41,8 @@ class SessionTokenAuthentication(authentication.BaseAuthentication):
         auth = get_authorization_header(request).split()
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
-            return None
+            msg = _('Session token not provided in header.')
+            raise exceptions.AuthenticationFailed(msg)
 
         if len(auth) == 1:
             msg = _('Invalid token header. No credentials provided.')
@@ -58,7 +59,6 @@ class SessionTokenAuthentication(authentication.BaseAuthentication):
 
         return self.authenticate_credentials(token)
 
-    # TODO: need to rewrite logic here!
     def authenticate_credentials(self, key):
         model = self.get_model()
 
@@ -72,11 +72,12 @@ class SessionTokenAuthentication(authentication.BaseAuthentication):
         if not token.user.is_active:
             raise exceptions.AuthenticationFailed(_('User inactive or deleted.'))
 
-        # return user and token model instace
-        return (token.user, token)
+        # return user and token model instance
+        return token.user, token
 
     def authenticate_header(self, request):
         return self.keyword
+
 
 # Contents adapted ObtainAuthToken
 class ObtainSessionToken(APIView):
@@ -91,11 +92,13 @@ class ObtainSessionToken(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
 
+        # setting default privilege to "No privilege":
+        privilege, created = user_models.Privilege.objects.get_or_create(name="No privilege")
+
         # TODO: currently implements get_or_create -- hence, not possible to create multiple tokens here
-        token, created = user_models.SessionToken.objects.get_or_create(user=user)
-        return Response({'token': token.key})
+        token, created = user_models.SessionToken.objects.get_or_create(user=user, privilege_id=privilege.id)
+        return Response({'session_token': token.key})
 
 
 # Note: Transaction tokens are handled separately
 # -- obtaining it is done by Transaction Manager, and "Auth" is done in permissions
-

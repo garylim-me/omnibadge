@@ -1,6 +1,3 @@
-# Created for REST APIs
-# Doc:
-
 from rest_framework import serializers
 from .models import Transaction
 
@@ -11,9 +8,6 @@ class TransactionCreateSerializer(serializers.Serializer):
     # TODO: change go company object and company serializer?
     company_id = serializers.IntegerField()
     version = serializers.CharField(max_length=30)
-
-    # TODO: Add document type objects and serializer?
-    # document_types = DocumentTypeSerializer(many=True)  # A nested list of 'document_type' items.
 
     def create(self, validated_data):
         transaction = Transaction.objects.create(
@@ -26,6 +20,17 @@ class TransactionCreateSerializer(serializers.Serializer):
         self.validated_data['transaction_id'] = transaction.id
 
         return transaction
+
+    # TODO: WIP. Not sure if needed.
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `Snippet` instance, given the validated data.
+        """
+        instance.email = validated_data.get('email', instance.email)
+        instance.company_id = validated_data.get('company_id', instance.company_id)
+        instance.version = validated_data.get('version', instance.version)
+        instance.save()
+        return instance
 
 
 class TransactionSerializer(serializers.ModelSerializer):

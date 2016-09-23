@@ -13,6 +13,7 @@ from django.utils import timezone
 
 from users import models as user_models
 from companies import models as company_models
+from documents import models as document_models
 
 
 class DocumentType(models.Model):
@@ -38,7 +39,7 @@ class TransactionManager(models.Manager):
     def create(self, email, company_id, version, document_type=None):
         # identify user, company
         # TODO: user get_or_create?
-        user = user_models.User.objects.get(email=email)
+        user, created = user_models.User.objects.get_or_create(email=email)
         # TODO: get company. TEmp. need to extract company from the session token
         company = company_models.Company.objects.get(id=company_id)
 
@@ -49,6 +50,29 @@ class TransactionManager(models.Manager):
         transaction = Transaction(user=user, transaction_token=new_token, company=company, version=version)
         transaction.save()
         return transaction
+
+    def create_document(self, email, doc_type, transaction_id, version, **kwargs):
+        if doc_type == "Form":
+            doc_class = document_models.DocForm
+            # document_type = transaction_models.DocumentType.objects.get(name="Form")
+        elif doc_type == "Passport":
+            doc_class = document_models.DocPassport
+            # document_type = transaction_models.DocumentType.objects.get(name="Passport")
+        else:
+            raise ValueError("doc_type is not supported.")
+
+        owner = user_models.User.objects.get(email=email)
+
+        # simplified.
+        doc_object = doc_class.objects.create(**kwargs)
+
+        user_doc = document_models.UserDocument(user=owner, document_object=doc_object, version=version)
+        user_doc.save()
+
+        transaction = Transaction.objects.get(id=transaction_id)
+        transaction.documents.add(user_doc)
+
+        return user_doc
 
 
 class Transaction(models.Model):
@@ -76,6 +100,11 @@ class Transaction(models.Model):
     transaction_token = models.OneToOneField('TransactionToken', related_name='transaction',
                                              on_delete=models.CASCADE, verbose_name=_("TransactionToken")
                                              )
+
+    # relationship moved from documents transactions
+    # references: many documents to *many* transactions. Can *potentially* have 0 transactions/doc *in the future*.
+    # (many transactions because the same document can be shared with another company for a different transaction)
+    user_documents = models.ManyToManyField(document_models.UserDocument, blank=True, related_name='transactions')
 
     # TODO: two competing way to customize transaction: doc_types or service. To decide
     # references: many transactions to 1 service

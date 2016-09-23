@@ -13,8 +13,8 @@ def create_user():
     given number of `days` offset to now (negative for questions published
     in the past, positive for questions that have yet to be published).
     """
-    return User.objects.create(email="test@omnibadge.com", username="testuser", first_name="test",
-                               last_name="test_last", password="testpass", )
+    return User.objects.create(email="test@omnibadge.com", first_name="test",
+                               last_name="test_last", password="passpass", )
 
 
 class UserMethodTests(TestCase):
